@@ -1,28 +1,33 @@
 [project]
 name = "demo_code_location"
 version = "0.1.0"
-description = "This is a demo code location."
+description = "Demo Dagster code location with geospatial data processing"
 readme = "README.md"
 requires-python = ">=3.9,<3.13"
+authors = [
+    { name = "Derrick Li", email = "derrickli.know@gmail.com" },
+]
 dependencies = [
-    "dagster==1.11.*",
+    # Core Dagster
+    "dagster>=1.11.0,<1.12.0",
+    # Code location specific
     "dagster-cloud",
     "dagster-duckdb",
+    "duckdb>=1.3.1",
     "geopandas",
+    "matplotlib",
     "pandas[parquet]",
     "shapely",
-    "matplotlib",
-    "duckdb>=1.3.1",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "dagster-webserver", 
+    "dagster-webserver",
     "pytest",
 ]
 
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.dagster]
@@ -30,4 +35,9 @@ module_name = "demo_code_location.definitions"
 code_location_name = "demo_code_location"
 
 [tool.setuptools.packages.find]
-exclude=["demo_code_location_tests"]
+where = ["."]  # Look for packages in the current directory
+exclude = [
+    "*_tests",
+    "tests*",
+    "demo_code_location_tests",
+]

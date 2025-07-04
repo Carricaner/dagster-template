@@ -1,11 +1,16 @@
 [project]
 name = "with_openai"
 version = "0.1.0"
-description = "Dagster code location with OpenAI integration"
+description = "Dagster code location with OpenAI and LangChain integration"
 readme = "README.md"
 requires-python = ">=3.9,<3.13"
+authors = [
+    { name = "Derrick Li", email = "derrickli.know@gmail.com" },
+]
 dependencies = [
-    "dagster==1.11.*",
+    # Core Dagster
+    "dagster>=1.11.0,<1.12.0",
+    # Code location specific
     "dagster-aws",
     "dagster-openai",
     "faiss-cpu==1.8.0",
@@ -17,12 +22,12 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "dagster-webserver", 
+    "dagster-webserver",
     "pytest",
 ]
 
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.dagster]
@@ -30,4 +35,9 @@ module_name = "with_openai.definitions"
 code_location_name = "with_openai"
 
 [tool.setuptools.packages.find]
-exclude=["with_openai_tests"]
+where = ["."]  # Look for packages in the current directory
+exclude = [
+    "*_tests",
+    "tests*",
+    "demo_code_location_tests",
+]
