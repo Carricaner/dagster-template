@@ -31,10 +31,14 @@ MANIFEST
 
 # Virtual environments
 venv/
+.venv/
 env/
 ENV/
 env.bak/
 venv.bak/
+
+# uv
+# Note: uv.lock should be committed to ensure reproducible builds
 
 # Environment variables
 .env

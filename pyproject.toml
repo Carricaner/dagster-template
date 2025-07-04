@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv.workspace]
+members = [
+    "demo-code-location",
+    "with_openai"
+]
+
+[tool.uv.sources]
+demo_code_location = { workspace = true }
+with_openai = { workspace = true }
