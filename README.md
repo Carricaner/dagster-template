@@ -6,25 +6,37 @@
 
 ## Setup
 
-1. Install all the dependencies
+- Install all the dependencies
 
     ```shell
     uv sync --all-extras
     ```
 
-2. Activate the environment
+- Activate the environment
 
     ```shell
     source .venv/bin/activate
     ```
 
+## Usage
+
+### Add a new code location
+
+1. Create a new code location
+
+  ```shell
+  dagster project scaffold --name <new-code-location-name>
+  ```
+
+2. Add a new line in `workspace.yaml` according to the project name.
+
+  ```yaml
+  load_from:
+    - python_module: demo_code_location.definitions
+    - python_module: with_openai.definitions
+  ```
+
 ## Commands
-
-- Create a brand-new code location
-
-    ```shell
-    dagster project scaffold --name <brand-new-code-location>
-    ```
 
 - Start a local deployment of Dagster
 
@@ -37,7 +49,6 @@
 - Code Location
     - use only `pyproject.toml` and don't use `setup.py` to maintain single source of truth.
     - PEP 517/518 compliant
-    -
 
 ## References
 
