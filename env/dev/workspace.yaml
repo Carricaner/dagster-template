@@ -1,0 +1,3 @@
+load_from:
+  - python_module: demo_code_location.definitions
+  - python_module: with_openai.definitions
