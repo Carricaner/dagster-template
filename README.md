@@ -41,7 +41,7 @@
 - Start a local deployment of Dagster
 
     ```shell
-    deagster dev -p <port>
+    dagster dev -w env/dev/workspace.yaml -p <port>
     ```
 
 ## Notes
