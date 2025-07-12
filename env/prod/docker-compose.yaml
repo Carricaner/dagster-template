@@ -18,6 +18,10 @@ services:
       interval: 10s
       timeout: 8s
       retries: 5
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"
 
       # This service runs the gRPC server that loads your user code, in both dagster-webserver
       # and dagster-daemon. By setting DAGSTER_CURRENT_IMAGE to its own image, we tell the
@@ -27,8 +31,8 @@ services:
       # webserver.
   docker_example_user_code:
     build:
-      context: .
-      dockerfile: ./Dockerfile_user_code
+      context: ../../demo-code-location
+      dockerfile: Dockerfile_user_code
     container_name: docker_example_user_code
     image: docker_example_user_code_image
     restart: always
@@ -37,12 +41,28 @@ services:
       DAGSTER_POSTGRES_PASSWORD: "postgres_password"
       DAGSTER_POSTGRES_DB: "postgres_db"
       DAGSTER_CURRENT_IMAGE: "docker_example_user_code_image"
+    expose:
+      - "4000"
     networks:
       - docker_example_network
 
-  # This service runs dagster-webserver, which loads your user code from the user code container.
-  # Since our instance uses the QueuedRunCoordinator, any runs submitted from the webserver will be put on
-  # a queue and later dequeued and launched by dagster-daemon.
+  demo_code_location:
+    container_name: demo_code_location
+    build:
+      context: ../../demo-code-location
+      dockerfile: Dockerfile_demo_code_location
+    image: dagster_demo_code_location
+    restart: always
+    environment:
+      DAGSTER_POSTGRES_USER: "postgres_user"
+      DAGSTER_POSTGRES_PASSWORD: "postgres_password"
+      DAGSTER_POSTGRES_DB: "postgres_db"
+      DAGSTER_CURRENT_IMAGE: "docker_example_user_code_image"
+    expose:
+      - "4001"
+    networks:
+      - docker_example_network
+
   docker_example_webserver:
     build:
       context: .
@@ -64,7 +84,7 @@ services:
       DAGSTER_POSTGRES_USER: "postgres_user"
       DAGSTER_POSTGRES_PASSWORD: "postgres_password"
       DAGSTER_POSTGRES_DB: "postgres_db"
-    volumes: # Make docker client accessible so we can terminate containers from the webserver
+    volumes: # Make docker client accessible, so we can terminate containers from the webserver
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
     networks:
@@ -75,8 +95,6 @@ services:
       docker_example_user_code:
         condition: service_started
 
-  # This service runs the dagster-daemon process, which is responsible for taking runs
-  # off of the queue and launching them, as well as creating runs from schedules or sensors.
   docker_example_daemon:
     build:
       context: .
@@ -90,7 +108,7 @@ services:
       DAGSTER_POSTGRES_USER: "postgres_user"
       DAGSTER_POSTGRES_PASSWORD: "postgres_password"
       DAGSTER_POSTGRES_DB: "postgres_db"
-    volumes: # Make docker client accessible so we can launch containers using host docker
+    volumes: # Make docker client accessible, so we can launch containers using host docker
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
     networks:
