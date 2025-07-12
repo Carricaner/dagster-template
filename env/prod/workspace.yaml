@@ -1,10 +1,10 @@
 load_from:
   # Each entry here corresponds to a service in the docker-compose file that exposes user code.
   - grpc_server:
-      host: docker_example_user_code
-      port: 4000
-      location_name: "example_user_code"
-  - grpc_server:
       host: demo_code_location
       port: 4001
       location_name: "demo_code_location_uii"
+  - grpc_server:
+      host: with_openai
+      port: 4002
+      location_name: "with_openai"

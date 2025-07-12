@@ -23,43 +23,43 @@ services:
     ports:
       - "8080:8080"
 
-      # This service runs the gRPC server that loads your user code, in both dagster-webserver
-      # and dagster-daemon. By setting DAGSTER_CURRENT_IMAGE to its own image, we tell the
-      # run launcher to use this same image when launching runs in a new container as well.
-      # Multiple containers like this can be deployed separately - each just needs to run on
-      # its own port, and have its own entry in the workspace.yaml file that's loaded by the
-      # webserver.
-  docker_example_user_code:
-    build:
-      context: ../../demo-code-location
-      dockerfile: Dockerfile_user_code
-    container_name: docker_example_user_code
-    image: docker_example_user_code_image
-    restart: always
-    environment:
-      DAGSTER_POSTGRES_USER: "postgres_user"
-      DAGSTER_POSTGRES_PASSWORD: "postgres_password"
-      DAGSTER_POSTGRES_DB: "postgres_db"
-      DAGSTER_CURRENT_IMAGE: "docker_example_user_code_image"
-    expose:
-      - "4000"
-    networks:
-      - docker_example_network
-
+  # This service runs the gRPC server that loads your user code, in both dagster-webserver
+  # and dagster-daemon. By setting DAGSTER_CURRENT_IMAGE to its own image, we tell the
+  # run launcher to use this same image when launching runs in a new container as well.
+  # Multiple containers like this can be deployed separately - each just needs to run on
+  # its own port, and have its own entry in the workspace.yaml file that's loaded by the
+  # webserver.
   demo_code_location:
     container_name: demo_code_location
     build:
       context: ../../demo-code-location
-      dockerfile: Dockerfile_demo_code_location
+      dockerfile: Dockerfile
     image: dagster_demo_code_location
     restart: always
     environment:
       DAGSTER_POSTGRES_USER: "postgres_user"
       DAGSTER_POSTGRES_PASSWORD: "postgres_password"
       DAGSTER_POSTGRES_DB: "postgres_db"
-      DAGSTER_CURRENT_IMAGE: "docker_example_user_code_image"
+      DAGSTER_CURRENT_IMAGE: "dagster_demo_code_location"
     expose:
       - "4001"
+    networks:
+      - docker_example_network
+
+  with_openai:
+    container_name: with_openai
+    build:
+      context: ../../with_openai
+      dockerfile: Dockerfile
+    image: dagster_with_openai
+    restart: always
+    environment:
+      DAGSTER_POSTGRES_USER: "postgres_user"
+      DAGSTER_POSTGRES_PASSWORD: "postgres_password"
+      DAGSTER_POSTGRES_DB: "postgres_db"
+      DAGSTER_CURRENT_IMAGE: "dagster_with_openai"
+    expose:
+      - "4002"
     networks:
       - docker_example_network
 
@@ -92,7 +92,9 @@ services:
     depends_on:
       docker_example_postgresql:
         condition: service_healthy
-      docker_example_user_code:
+      demo_code_location:
+        condition: service_started
+      with_openai:
         condition: service_started
 
   docker_example_daemon:
@@ -116,7 +118,9 @@ services:
     depends_on:
       docker_example_postgresql:
         condition: service_healthy
-      docker_example_user_code:
+      demo_code_location:
+        condition: service_started
+      with_openai:
         condition: service_started
 
 networks:
