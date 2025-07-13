@@ -1,16 +1,13 @@
-from dagster import Definitions, load_assets_from_modules
+from dagster import Definitions, load_assets_from_modules, load_asset_checks_from_modules
 
-from . import assets
-from .assets.assets import chained_job
+from .assets import assets
 
 # Load all assets from the assets module
 all_assets = load_assets_from_modules([assets])
-
-# Define all jobs
-all_jobs = [chained_job]
+all_asset_checks = load_asset_checks_from_modules([assets])
 
 # Create the main Definitions object
 defs = Definitions(
     assets=all_assets,
-    jobs=all_jobs,
+    asset_checks=all_asset_checks
 )
