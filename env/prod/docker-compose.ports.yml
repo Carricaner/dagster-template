@@ -1,0 +1,12 @@
+version: "3.7"
+
+services:
+  example_service:
+    expose:
+      - "${EXPOSE_PORT_1}"
+      - "${EXPOSE_PORT_2}"
+      - "${EXPOSE_PORT_3}"
+    ports:
+      - "${MAP_PORT_1}"
+      - "${MAP_PORT_2}"
+      - "${MAP_PORT_3}"

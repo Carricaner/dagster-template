@@ -1,12 +1,10 @@
 version: "3.7"
+name: "${COMPOSE_PROJECT_NAME:-dagster-template-prod}"
 
 services:
-  # This service runs the postgres DB used by dagster for run storage, schedule storage,
-  # and event log storage. Depending on the hardware you run this Compose on, you may be able
-  # to reduce the interval and timeout in the healthcheck to speed up your `docker-compose up` times.
   dagster_storage:
-    image: postgres:17
     container_name: dagster_storage
+    image: postgres:17
     environment:
       POSTGRES_USER: ${DAGSTER_STORAGE_POSTGRES_USER}
       POSTGRES_PASSWORD: ${DAGSTER_STORAGE_POSTGRES_PASSWORD}
@@ -20,51 +18,12 @@ services:
       # This will work fine if the value is an integer because Docker will convert the data type automatically/
       retries: ${DAGSTER_STORAGE_HEALTHCHECK_RETRIES:-5}
     expose:
-      - "8080"
+      - ${DAGSTER_STORAGE_EXPOSE_PORT}
     ports:
-      - "8080:8080"
+      - ${DAGSTER_STORAGE_EXPOSE_PORTS_MAPPING}
 
-  # This service runs the gRPC server that loads your user code, in both dagster-webserver
-  # and dagster-daemon. By setting DAGSTER_CURRENT_IMAGE to its own image, we tell the
-  # run launcher to use this same image when launching runs in a new container as well.
-  # Multiple containers like this can be deployed separately - each just needs to run on
-  # its own port, and have its own entry in the workspace.yaml file that's loaded by the
-  # webserver.
-  demo_code_location:
-    container_name: demo_code_location
-    build:
-      context: ../../demo-code-location
-      dockerfile: Dockerfile
-    image: dagster_demo_code_location
-    restart: always
-    environment:
-      DAGSTER_POSTGRES_USER: ${DAGSTER_STORAGE_POSTGRES_USER}
-      DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_STORAGE_POSTGRES_PASSWORD}
-      DAGSTER_POSTGRES_DB: ${DAGSTER_STORAGE_POSTGRES_DB}
-      DAGSTER_CURRENT_IMAGE: "dagster_demo_code_location"
-    expose:
-      - "4001"
-    networks:
-      - docker_example_network
-
-  with_openai:
-    container_name: with_openai
-    build:
-      context: ../../with_openai
-      dockerfile: Dockerfile
-    image: dagster_with_openai
-    restart: always
-    environment:
-      DAGSTER_POSTGRES_USER: ${DAGSTER_STORAGE_POSTGRES_USER}
-      DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_STORAGE_POSTGRES_PASSWORD}
-      DAGSTER_POSTGRES_DB: ${DAGSTER_STORAGE_POSTGRES_DB}
-      DAGSTER_CURRENT_IMAGE: "dagster_with_openai"
-    expose:
-      - "4002"
-    networks:
-      - docker_example_network
-
-  docker_example_webserver:
+  dagster_webserver:
+    container_name: dagster_webserver
     build:
       context: .
       dockerfile: ./Dockerfile_dagster
@@ -73,14 +32,13 @@ services:
       - -h
       - "0.0.0.0"
       - -p
-      - "3000"
+      - ${DAGSTER_WEB_SERVER_PORT}
       - -w
       - workspace.yaml
-    container_name: docker_example_webserver
     expose:
-      - "3000"
+      - ${DAGSTER_WEB_SERVER_PORT}
     ports:
-      - "3000:3000"
+      - ${DAGSTER_WEB_SERVER_PORT_MAPPING}
     environment:
       DAGSTER_POSTGRES_USER: ${DAGSTER_STORAGE_POSTGRES_USER}
       DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_STORAGE_POSTGRES_PASSWORD}
@@ -98,14 +56,14 @@ services:
       with_openai:
         condition: service_started
 
-  docker_example_daemon:
+  dagster_daemon:
+    container_name: dagster_daemon
     build:
       context: .
       dockerfile: ./Dockerfile_dagster
     entrypoint:
       - dagster-daemon
       - run
-    container_name: docker_example_daemon
     restart: on-failure
     environment:
       DAGSTER_POSTGRES_USER: ${DAGSTER_STORAGE_POSTGRES_USER}
@@ -123,6 +81,42 @@ services:
         condition: service_started
       with_openai:
         condition: service_started
+
+  demo_code_location:
+    container_name: demo_code_location
+    build:
+      context: ../../demo-code-location
+      dockerfile: Dockerfile
+    image: ${DEMO_CODE_LOCATION_IMAGE_NAME}
+    restart: always
+    environment:
+      DAGSTER_POSTGRES_USER: ${DAGSTER_STORAGE_POSTGRES_USER}
+      DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_STORAGE_POSTGRES_PASSWORD}
+      DAGSTER_POSTGRES_DB: ${DAGSTER_STORAGE_POSTGRES_DB}
+      # By setting DAGSTER_CURRENT_IMAGE to its own image, we tell the run launcher to use this same image when launching runs in a new container as well.
+      DAGSTER_CURRENT_IMAGE: ${DEMO_CODE_LOCATION_IMAGE_NAME}
+    expose:
+      - ${DEMO_CODE_LOCATION_PORT}
+    networks:
+      - docker_example_network
+
+  with_openai:
+    container_name: with_openai
+    build:
+      context: ../../with_openai
+      dockerfile: Dockerfile
+    image: ${WITH_OPENAI_CODE_LOCATION_IMAGE_NAME}
+    restart: always
+    environment:
+      DAGSTER_POSTGRES_USER: ${DAGSTER_STORAGE_POSTGRES_USER}
+      DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_STORAGE_POSTGRES_PASSWORD}
+      DAGSTER_POSTGRES_DB: ${DAGSTER_STORAGE_POSTGRES_DB}
+      # By setting DAGSTER_CURRENT_IMAGE to its own image, we tell the run launcher to use this same image when launching runs in a new container as well.
+      DAGSTER_CURRENT_IMAGE: ${WITH_OPENAI_CODE_LOCATION_IMAGE_NAME}
+    expose:
+      - ${WITH_OPENAI_CODE_LOCATION_PORT}
+    networks:
+      - docker_example_network
 
 networks:
   docker_example_network:
