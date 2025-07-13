@@ -4,20 +4,21 @@ services:
   # This service runs the postgres DB used by dagster for run storage, schedule storage,
   # and event log storage. Depending on the hardware you run this Compose on, you may be able
   # to reduce the interval and timeout in the healthcheck to speed up your `docker-compose up` times.
-  docker_example_postgresql:
-    image: postgres:11
-    container_name: docker_example_postgresql
+  dagster_storage:
+    image: postgres:17
+    container_name: dagster_storage
     environment:
-      POSTGRES_USER: "postgres_user"
-      POSTGRES_PASSWORD: "postgres_password"
-      POSTGRES_DB: "postgres_db"
+      POSTGRES_USER: ${DAGSTER_STORAGE_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${DAGSTER_STORAGE_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DAGSTER_STORAGE_POSTGRES_DB}
     networks:
       - docker_example_network
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres_user -d postgres_db" ]
-      interval: 10s
-      timeout: 8s
-      retries: 5
+      interval: ${DAGSTER_STORAGE_HEALTHCHECK_INTERVAL:-10s}
+      timeout: ${DAGSTER_STORAGE_HEALTHCHECK_TIMEOUT:-8s}
+      # This will work fine if the value is an integer because Docker will convert the data type automatically/
+      retries: ${DAGSTER_STORAGE_HEALTHCHECK_RETRIES:-5}
     expose:
       - "8080"
     ports:
@@ -37,9 +38,9 @@ services:
     image: dagster_demo_code_location
     restart: always
     environment:
-      DAGSTER_POSTGRES_USER: "postgres_user"
-      DAGSTER_POSTGRES_PASSWORD: "postgres_password"
-      DAGSTER_POSTGRES_DB: "postgres_db"
+      DAGSTER_POSTGRES_USER: ${DAGSTER_STORAGE_POSTGRES_USER}
+      DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_STORAGE_POSTGRES_PASSWORD}
+      DAGSTER_POSTGRES_DB: ${DAGSTER_STORAGE_POSTGRES_DB}
       DAGSTER_CURRENT_IMAGE: "dagster_demo_code_location"
     expose:
       - "4001"
@@ -54,9 +55,9 @@ services:
     image: dagster_with_openai
     restart: always
     environment:
-      DAGSTER_POSTGRES_USER: "postgres_user"
-      DAGSTER_POSTGRES_PASSWORD: "postgres_password"
-      DAGSTER_POSTGRES_DB: "postgres_db"
+      DAGSTER_POSTGRES_USER: ${DAGSTER_STORAGE_POSTGRES_USER}
+      DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_STORAGE_POSTGRES_PASSWORD}
+      DAGSTER_POSTGRES_DB: ${DAGSTER_STORAGE_POSTGRES_DB}
       DAGSTER_CURRENT_IMAGE: "dagster_with_openai"
     expose:
       - "4002"
@@ -81,16 +82,16 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DAGSTER_POSTGRES_USER: "postgres_user"
-      DAGSTER_POSTGRES_PASSWORD: "postgres_password"
-      DAGSTER_POSTGRES_DB: "postgres_db"
+      DAGSTER_POSTGRES_USER: ${DAGSTER_STORAGE_POSTGRES_USER}
+      DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_STORAGE_POSTGRES_PASSWORD}
+      DAGSTER_POSTGRES_DB: ${DAGSTER_STORAGE_POSTGRES_DB}
     volumes: # Make docker client accessible, so we can terminate containers from the webserver
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
     networks:
       - docker_example_network
     depends_on:
-      docker_example_postgresql:
+      dagster_storage:
         condition: service_healthy
       demo_code_location:
         condition: service_started
@@ -107,16 +108,16 @@ services:
     container_name: docker_example_daemon
     restart: on-failure
     environment:
-      DAGSTER_POSTGRES_USER: "postgres_user"
-      DAGSTER_POSTGRES_PASSWORD: "postgres_password"
-      DAGSTER_POSTGRES_DB: "postgres_db"
+      DAGSTER_POSTGRES_USER: ${DAGSTER_STORAGE_POSTGRES_USER}
+      DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_STORAGE_POSTGRES_PASSWORD}
+      DAGSTER_POSTGRES_DB: ${DAGSTER_STORAGE_POSTGRES_DB}
     volumes: # Make docker client accessible, so we can launch containers using host docker
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
     networks:
       - docker_example_network
     depends_on:
-      docker_example_postgresql:
+      dagster_storage:
         condition: service_healthy
       demo_code_location:
         condition: service_started

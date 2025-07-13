@@ -71,12 +71,25 @@
       - docker_example_network
   ```
 
+  and make sure modify `__init__.py` in the module.
+  
+  ```python
+  from .definitions import defs
+  __all__ = ["defs"]
+  ```
+
 ## Commands
 
-- Start a local deployment of Dagster
-
+- Run Dagster
+  - local
     ```shell
     dagster dev -w env/dev/workspace.yaml -p <port>
+    ```
+  
+  - prod
+    ```shell
+    cd ./env/prod
+    docker compose up
     ```
 
 ## Notes
@@ -93,4 +106,3 @@
     - [Dagster CLI](https://docs.dagster.io/api/dagster/cli#dagster-project)
     - [workspace.yaml](https://docs.dagster.io/deployment/code-locations/workspace-yaml)
     - [Dagster OSS deployment architecture](https://docs.dagster.io/deployment/oss/oss-deployment-architecture)
-
